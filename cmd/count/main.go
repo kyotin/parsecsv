@@ -29,6 +29,8 @@ type Report struct {
 }
 
 func main() {
+	flag.Parse()
+
 	in, err := os.Open(*in)
 	if err != nil {
 		log.Fatal(err)
