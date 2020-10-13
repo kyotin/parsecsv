@@ -8,7 +8,6 @@ import (
 	"os"
 	"parsecsv/internal/reader"
 	"parsecsv/internal/utils"
-	"strconv"
 	"strings"
 	"sync"
 )
@@ -17,7 +16,7 @@ var (
 	inJson    = flag.String("inJson", "/Users/tinnguyen/Downloads/test.json", "path to json file")
 	inCsv     = flag.String("inCsv", "/Users/tinnguyen/Downloads/test.csv", "Path to csv file")
 	out       = flag.String("out", "./out.json", "path to out file")
-	workers   = flag.String("workers", "1", "max number of workers")
+	workers   = flag.Int("workers", 1, "max number of workers")
 	buffLines = flag.Int("buffLines", 1000, "buffer lines when reading")
 )
 
@@ -68,15 +67,16 @@ func main() {
 	}
 
 	emailPhoneMap := make(map[string]string)
-	emailPhoneMapMutex := sync.RWMutex{}
 
 	// work with csv file and build map
 	csvLines := make(chan string, *buffLines)
-	var csvReadWaitGroup sync.WaitGroup
-	csvConcurrentReader := reader.NewConcurrentReader(csvFile, csvLines, 10, &csvReadWaitGroup)
+	var csvReadWG sync.WaitGroup
+	csvConcurrentReader := reader.NewConcurrentReader(csvFile, csvLines, 10, &csvReadWG)
 	csvConcurrentReader.Read()
 
-	go func(lines <-chan string, emailPhoneMap map[string]string, emailPhoneMapMutex *sync.RWMutex) {
+	var csvBuildMapWG sync.WaitGroup
+	csvBuildMapWG.Add(1)
+	go func(lines <-chan string, emailPhoneMap map[string]string, wg *sync.WaitGroup) {
 		for line := range lines {
 			fields := strings.Split(line, "\t")
 			if len(fields) < 3 {
@@ -91,15 +91,16 @@ func main() {
 			}
 
 			if record.Phone != "" && record.Email != "" {
-				emailPhoneMapMutex.Lock()
 				emailPhoneMap[record.Email] = record.Phone
-				emailPhoneMapMutex.Unlock()
 			}
 		}
-	}(csvLines, emailPhoneMap, &emailPhoneMapMutex)
+		wg.Done()
+	}(csvLines, emailPhoneMap, &csvBuildMapWG)
 
-	csvReadWaitGroup.Wait()
+	csvReadWG.Wait()
 	close(csvLines)
+
+	csvBuildMapWG.Wait()
 
 	// work with json file
 	lines := make(chan string, *buffLines)
@@ -107,8 +108,7 @@ func main() {
 	concurrentReader := reader.NewConcurrentReader(jsonFile, lines, 10, &readWaitGroup)
 	concurrentReader.Read()
 
-	maxWorker, _ := strconv.Atoi(*workers)
-	goodLines := make(chan string, maxWorker)
+	goodLines := make(chan string, *workers)
 	go func(goodLines <-chan string, out *os.File) {
 		hmap := make(map[uint32]struct{})
 		for line := range goodLines {
@@ -120,9 +120,9 @@ func main() {
 	}(goodLines, outFile)
 
 	var wg sync.WaitGroup
-	for i := 0; i < maxWorker; i++ {
+	for i := 0; i < *workers; i++ {
 		wg.Add(1)
-		go func(workerId int, lines <-chan string, goodLines chan<- string, wg *sync.WaitGroup, emailPhoneMap map[string]string, emailPhoneMapMutex *sync.RWMutex) {
+		go func(workerId int, lines <-chan string, goodLines chan<- string, wg *sync.WaitGroup, emailPhoneMap map[string]string) {
 			fmt.Printf("Worker %d Start \n", workerId)
 			numOfLines := 0
 			hitEmail := 0
@@ -131,12 +131,10 @@ func main() {
 				record := &Record{}
 				if err := json.Unmarshal([]byte(line), record); err == nil {
 					// DO business here
-					emailPhoneMapMutex.RLock()
 					if val, ok := emailPhoneMap[record.Source.PersonEmail]; ok{
 						record.Source.PersonPhone = val
 						hitEmail += 1
 					}
-					emailPhoneMapMutex.RUnlock()
 					if b, err := json.Marshal(record.Source); err == nil {
 						goodLines <- string(b)
 					} else {
@@ -147,7 +145,7 @@ func main() {
 
 			fmt.Printf("Worker %d had procesed %d lines, and hit %d email \n", workerId, numOfLines, hitEmail)
 			wg.Done()
-		}(i, lines, goodLines, &wg, emailPhoneMap, &emailPhoneMapMutex)
+		}(i, lines, goodLines, &wg, emailPhoneMap)
 	}
 
 	readWaitGroup.Wait()
