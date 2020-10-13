@@ -88,7 +88,7 @@ func main() {
 			Phone: fields[2],
 		}
 
-		if record.Phone != "" {
+		if record.Phone != "" && record.Email != "" {
 			emailPhoneMap[record.Email] = record.Phone
 		}
 	}
