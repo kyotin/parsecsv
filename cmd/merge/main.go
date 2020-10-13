@@ -68,6 +68,7 @@ func main() {
 	}
 
 	emailPhoneMap := make(map[string]string)
+	emailPhoneMapMutex := sync.RWMutex{}
 
 	// work with csv file and build map
 	csvLines := make(chan string, *buffLines)
@@ -79,7 +80,7 @@ func main() {
 		for line := range lines {
 			fields := strings.Split(line, "\t")
 			if len(fields) < 3 {
-				fmt.Sprintf("ERROR: %s", fields)
+				fmt.Printf("ERROR: %s \n", fields)
 				continue
 			}
 
@@ -90,7 +91,9 @@ func main() {
 			}
 
 			if record.Phone != "" && record.Email != "" {
+				emailPhoneMapMutex.Lock()
 				emailPhoneMap[record.Email] = record.Phone
+				emailPhoneMapMutex.Unlock()
 			}
 		}
 	}(csvLines, emailPhoneMap)
