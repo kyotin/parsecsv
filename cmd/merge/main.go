@@ -78,6 +78,11 @@ func main() {
 	go func(lines <-chan string, emailPhoneMap map[string]string) {
 		for line := range lines {
 			fields := strings.Split(line, "\t")
+			if len(fields) < 3 {
+				fmt.Sprintf("ERROR: %s", fields)
+				continue
+			}
+
 			record := CsvRecord{
 				Name:  fields[0],
 				Email: fields[1],
