@@ -149,10 +149,12 @@ func main() {
 					}
 				}
 
-				if b, err := json.Marshal(record); err == nil {
-					goodLines <- string(b)
-				} else {
-					fmt.Println(err)
+				if !record.IsNotValid() {
+					if b, err := json.Marshal(record); err == nil {
+						goodLines <- string(b)
+					} else {
+						fmt.Println(err)
+					}
 				}
 			}
 
