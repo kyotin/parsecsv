@@ -128,7 +128,7 @@ func main() {
 				}
 
 				record := CsvRecord{
-					Name:  fields[0],
+					Name:  strings.ToLower(fields[0]),
 					Email: fields[1],
 					Phone: fields[2],
 					PersonLinkedinUrl: fields[3],
