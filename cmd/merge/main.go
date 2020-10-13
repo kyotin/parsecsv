@@ -71,7 +71,7 @@ func main() {
 	// work with csv file and build map
 	csvLines := make(chan string, *buffLines)
 	var csvReadWG sync.WaitGroup
-	csvConcurrentReader := reader.NewConcurrentReader(csvFile, csvLines, 10, &csvReadWG)
+	csvConcurrentReader := reader.NewConcurrentReader(csvFile, csvLines, 30, &csvReadWG)
 	csvConcurrentReader.Read()
 
 	var csvBuildMapWG sync.WaitGroup
@@ -105,7 +105,7 @@ func main() {
 	// work with json file
 	lines := make(chan string, *buffLines)
 	var readWaitGroup sync.WaitGroup
-	concurrentReader := reader.NewConcurrentReader(jsonFile, lines, 10, &readWaitGroup)
+	concurrentReader := reader.NewConcurrentReader(jsonFile, lines, 15, &readWaitGroup)
 	concurrentReader.Read()
 
 	goodLines := make(chan string, *workers)
