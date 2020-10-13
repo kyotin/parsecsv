@@ -80,7 +80,6 @@ func (cr *ConcurrentReader) Read() {
 				}
 			}
 
-			fmt.Printf("ReaderWorker %d sent %d lines \n", workerIdx, numOfLines)
 			readWaitGroup.Done()
 		}(i, cr.Line, size, cr.File, cr.Wg)
 	}

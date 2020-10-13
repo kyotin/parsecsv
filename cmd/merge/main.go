@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 	"parsecsv/internal/reader"
-	"parsecsv/internal/utils"
+	"parsecsv/internal/writer"
 	"strings"
 	"sync"
 )
@@ -108,16 +108,10 @@ func main() {
 	concurrentReader := reader.NewConcurrentReader(jsonFile, lines, 15, &readWaitGroup)
 	concurrentReader.Read()
 
-	goodLines := make(chan string, *workers)
-	go func(goodLines <-chan string, out *os.File) {
-		hmap := make(map[uint32]struct{})
-		for line := range goodLines {
-			if _, ok := hmap[utils.Hash(line)]; !ok {
-				hmap[utils.Hash(line)] = struct{}{}
-				_, _ = out.WriteString(line + "\n")
-			}
-		}
-	}(goodLines, outFile)
+	goodLines := make(chan string, *workers * 1000)
+	var writeWaitGroup sync.WaitGroup
+	concurrentWriter := writer.NewWriteConcurrent(outFile, goodLines, 10, &writeWaitGroup)
+	concurrentWriter.Write()
 
 	var wg sync.WaitGroup
 	for i := 0; i < *workers; i++ {
@@ -153,6 +147,8 @@ func main() {
 
 	wg.Wait()
 	close(goodLines)
+
+	writeWaitGroup.Wait()
 
 	_ = csvFile.Close()
 	_ = jsonFile.Close()

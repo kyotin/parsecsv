@@ -62,10 +62,11 @@ func main() {
 	goodLines := make(chan string, *processWorkers)
 	// Write worker
 	go func(goodLines <-chan string) {
-		hmap := make(map[uint32]struct{})
+		hmap := make(map[string]struct{})
 		for line := range goodLines {
-			if _, ok := hmap[utils.Hash(line)]; !ok {
-				hmap[utils.Hash(line)] = struct{}{}
+			hashValue := utils.HashSHA1(line)
+			if _, ok := hmap[hashValue]; !ok {
+				hmap[hashValue] = struct{}{}
 				_, _ = out.WriteString(line + "\n")
 			}
 		}
