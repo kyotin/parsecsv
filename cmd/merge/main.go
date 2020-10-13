@@ -122,7 +122,7 @@ func main() {
 	var wg sync.WaitGroup
 	for i := 0; i < maxWorker; i++ {
 		wg.Add(1)
-		go func(workerId int, lines <-chan string, goodLines chan<- string, wg *sync.WaitGroup, emailPhoneMap map[string]string) {
+		go func(workerId int, lines <-chan string, goodLines chan<- string, wg *sync.WaitGroup, emailPhoneMap map[string]string, emailPhoneMapMutex *sync.RWMutex) {
 			fmt.Printf("Worker %d Start \n", workerId)
 			numOfLines := 0
 			hitEmail := 0
@@ -131,10 +131,12 @@ func main() {
 				record := &Record{}
 				if err := json.Unmarshal([]byte(line), record); err == nil {
 					// DO business here
+					emailPhoneMapMutex.RLock()
 					if val, ok := emailPhoneMap[record.Source.PersonEmail]; ok{
 						record.Source.PersonPhone = val
 						hitEmail += 1
 					}
+					emailPhoneMapMutex.RUnlock()
 					if b, err := json.Marshal(record.Source); err == nil {
 						goodLines <- string(b)
 					} else {
@@ -145,7 +147,7 @@ func main() {
 
 			fmt.Printf("Worker %d had procesed %d lines, and hit %d email \n", workerId, numOfLines, hitEmail)
 			wg.Done()
-		}(i, lines, goodLines, &wg, emailPhoneMap)
+		}(i, lines, goodLines, &wg, emailPhoneMap, &emailPhoneMapMutex)
 	}
 
 	readWaitGroup.Wait()
