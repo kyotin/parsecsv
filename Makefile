@@ -4,5 +4,5 @@ export-go:
 count-build:
 	go build -o csvcount ./cmd/count
 
-merge-build:
-	go build -o merge ./cmd/merge
+dbv7-build:
+	go build -o dbv7 ./cmd/dbv7
