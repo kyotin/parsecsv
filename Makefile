@@ -6,3 +6,6 @@ count-build:
 
 dbv7-build:
 	go build -o dbv7 ./cmd/dbv7
+
+dbv5-build:
+	go build -o dbv5 ./cmd/dbv5
