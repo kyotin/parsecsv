@@ -34,7 +34,7 @@ type _Source struct {
 	PersonLastNameUnanalyzed          string   `json:"person_last_name_unanalyzed"`
 	PersonNameUnanalyzedDowncase      string   `json:"person_name_unanalyzed_downcase"`
 	PersonEmailStatusCd               string   `json:"person_email_status_cd"`
-	PersonExtrapolatedEmailConfidence string   `json:"person_extrapolated_email_confidence"`
+	PersonExtrapolatedEmailConfidence float32  `json:"person_extrapolated_email_confidence"`
 	PersonExtrapolatedEmail           string   `json:"person_extrapolated_email"`
 	PersonEmail                       string   `json:"person_email"`
 	PersonLinkedinUrl                 string   `json:"person_linkedin_url"`
