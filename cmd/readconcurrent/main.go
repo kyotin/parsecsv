@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"parsecsv/internal/reader"
+	"parsecsv/internal/utils"
 	"sync"
 )
 
@@ -61,9 +62,11 @@ func main() {
 	goodLines := make(chan string, *processWorkers)
 	// Write worker
 	go func(goodLines <-chan string) {
+		hmap := make(map[uint32]struct{})
 		for line := range goodLines {
-			if _, err := out.WriteString(line + "\n"); err != nil {
-				_ = fmt.Errorf("Can't write string to file")
+			if _, ok := hmap[utils.Hash(line)]; !ok {
+				hmap[utils.Hash(line)] = struct{}{}
+				_, _ = out.WriteString(line + "\n")
 			}
 		}
 	}(goodLines)

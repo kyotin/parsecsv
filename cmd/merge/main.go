@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"hash/fnv"
 	"log"
 	"os"
 	"parsecsv/internal/reader"
+	"parsecsv/internal/utils"
 	"strconv"
 	"strings"
 	"sync"
@@ -104,8 +104,8 @@ func main() {
 	go func(goodLines <-chan string, out *os.File) {
 		hmap := make(map[uint32]struct{})
 		for line := range goodLines {
-			if _, ok := hmap[hash(line)]; !ok {
-				hmap[hash(line)] = struct{}{}
+			if _, ok := hmap[utils.Hash(line)]; !ok {
+				hmap[utils.Hash(line)] = struct{}{}
 				_, _ = out.WriteString(line + "\n")
 			}
 		}
@@ -151,8 +151,3 @@ func main() {
 	_ = outFile.Close()
 }
 
-func hash(s string) uint32 {
-	h := fnv.New32a()
-	h.Write([]byte(s))
-	return h.Sum32()
-}
