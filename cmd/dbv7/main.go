@@ -112,6 +112,7 @@ func main() {
 	close(csvLines)
 
 	csvBuildMapWG.Wait()
+	fmt.Printf("Build emailPhoneMap finish, len %d \n", len(emailPhoneMap))
 
 	// work with json file
 	lines := make(chan string, *buffLines)
