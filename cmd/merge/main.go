@@ -76,7 +76,7 @@ func main() {
 	csvConcurrentReader := reader.NewConcurrentReader(csvFile, csvLines, 10, &csvReadWaitGroup)
 	csvConcurrentReader.Read()
 
-	go func(lines <-chan string, emailPhoneMap map[string]string) {
+	go func(lines <-chan string, emailPhoneMap map[string]string, emailPhoneMapMutex *sync.RWMutex) {
 		for line := range lines {
 			fields := strings.Split(line, "\t")
 			if len(fields) < 3 {
@@ -96,7 +96,7 @@ func main() {
 				emailPhoneMapMutex.Unlock()
 			}
 		}
-	}(csvLines, emailPhoneMap)
+	}(csvLines, emailPhoneMap, &emailPhoneMapMutex)
 
 	csvReadWaitGroup.Wait()
 	close(csvLines)
