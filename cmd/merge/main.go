@@ -88,7 +88,9 @@ func main() {
 			Phone: fields[2],
 		}
 
-		emailPhoneMap[record.Email] = record.Phone
+		if record.Phone != "" {
+			emailPhoneMap[record.Email] = record.Phone
+		}
 	}
 
 	// work with json file
@@ -161,7 +163,7 @@ func main() {
 					fmt.Printf("Can't parse json from line: %s \n", line)
 				} else {
 					// DO business here
-					if val, ok := emailPhoneMap[record.Source.PersonEmail]; ok {
+					if val, ok := emailPhoneMap[record.Source.PersonEmail]; ok{
 						record.Source.PersonPhone = val
 						hitEmail += 1
 					}
