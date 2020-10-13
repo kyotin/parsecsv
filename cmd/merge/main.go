@@ -1,16 +1,15 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/csv"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
+	"hash/fnv"
 	"log"
 	"os"
+	"parsecsv/internal/reader"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -19,7 +18,7 @@ var (
 	inCsv     = flag.String("inCsv", "/Users/tinnguyen/Downloads/test.csv", "Path to csv file")
 	out       = flag.String("out", "./out.json", "path to out file")
 	workers   = flag.String("workers", "1", "max number of workers")
-	buffLines = flag.String("buffLines", "100", "buffer lines when reading")
+	buffLines = flag.Int("buffLines", 1000, "buffer lines when reading")
 )
 
 // csv
@@ -70,80 +69,44 @@ func main() {
 
 	emailPhoneMap := make(map[string]string)
 
-	// build map by read csv file
-	r := csv.NewReader(csvFile)
-	r.Comma = getSeparator("\t")
-	for {
-		fields, err := r.Read()
-		if err != nil {
-			if err == io.EOF {
-				break
+	// work with csv file and build map
+	csvLines := make(chan string, *buffLines)
+	var csvReadWaitGroup sync.WaitGroup
+	csvConcurrentReader := reader.NewConcurrentReader(csvFile, csvLines, 10, &csvReadWaitGroup)
+	csvConcurrentReader.Read()
+
+	go func(lines <-chan string, emailPhoneMap map[string]string) {
+		for line := range lines {
+			fields := strings.Split(line, "\t")
+			record := CsvRecord{
+				Name:  fields[0],
+				Email: fields[1],
+				Phone: fields[2],
 			}
-			panic(err)
-		}
 
-		record := CsvRecord{
-			Name:  fields[0],
-			Email: fields[1],
-			Phone: fields[2],
+			if record.Phone != "" && record.Email != "" {
+				emailPhoneMap[record.Email] = record.Phone
+			}
 		}
+	}(csvLines, emailPhoneMap)
 
-		if record.Phone != "" && record.Email != "" {
-			emailPhoneMap[record.Email] = record.Phone
-		}
-	}
+	csvReadWaitGroup.Wait()
+	close(csvLines)
 
 	// work with json file
-	buffLines, _ := strconv.Atoi(*buffLines)
-	lines := make(chan string, buffLines)
-	go func(jsonFile *os.File) {
-		numOfLines := 0
-
-		// Start reading from the file with a reader.
-		reader := bufio.NewReader(jsonFile)
-		for {
-			var buffer bytes.Buffer
-			endOfFile := false
-			for {
-				l, isPrefix, err := reader.ReadLine()
-				if err == io.EOF {
-					endOfFile = true
-					break
-				}
-
-				buffer.Write(l)
-				// If we've reached the end of the line, stop reading.
-				if !isPrefix {
-					break
-				}
-
-				if err != nil && err != io.EOF {
-					fmt.Printf("ERROR %v \n", err)
-					break
-				}
-			}
-
-			if endOfFile {
-				break
-			}
-
-			line := buffer.String()
-			if line != "" {
-				lines <- line
-				numOfLines += 1
-			}
-		}
-
-		fmt.Printf("Sending %d lines \n", numOfLines)
-		close(lines)
-	}(jsonFile)
+	lines := make(chan string, *buffLines)
+	var readWaitGroup sync.WaitGroup
+	concurrentReader := reader.NewConcurrentReader(jsonFile, lines, 10, &readWaitGroup)
+	concurrentReader.Read()
 
 	maxWorker, _ := strconv.Atoi(*workers)
 	goodLines := make(chan string, maxWorker)
 	go func(goodLines <-chan string, out *os.File) {
+		hmap := make(map[uint32]struct{})
 		for line := range goodLines {
-			if _, err := out.WriteString(line + "\n"); err != nil {
-				_ = fmt.Errorf("Can't write string to file")
+			if _, ok := hmap[hash(line)]; !ok {
+				hmap[hash(line)] = struct{}{}
+				_, _ = out.WriteString(line + "\n")
 			}
 		}
 	}(goodLines, outFile)
@@ -158,10 +121,7 @@ func main() {
 			for line := range lines {
 				numOfLines += 1
 				record := &Record{}
-				err := json.Unmarshal([]byte(line), record)
-				if err != nil {
-					fmt.Printf("Can't parse json from line: %s \n", line)
-				} else {
+				if err := json.Unmarshal([]byte(line), record); err == nil {
 					// DO business here
 					if val, ok := emailPhoneMap[record.Source.PersonEmail]; ok{
 						record.Source.PersonPhone = val
@@ -180,6 +140,9 @@ func main() {
 		}(i, lines, goodLines, &wg, emailPhoneMap)
 	}
 
+	readWaitGroup.Wait()
+	close(lines)
+
 	wg.Wait()
 	close(goodLines)
 
@@ -188,22 +151,8 @@ func main() {
 	_ = outFile.Close()
 }
 
-func getSeparator(sepString string) (sepRune rune) {
-	sepString = `'` + sepString + `'`
-	sepRunes, err := strconv.Unquote(sepString)
-	if err != nil {
-		if err.Error() == "invalid syntax" { // Single quote was used as separator. No idea why someone would want this, but it doesn't hurt to support it
-			sepString = `"` + sepString + `"`
-			sepRunes, err = strconv.Unquote(sepString)
-			if err != nil {
-				panic(err)
-			}
-
-		} else {
-			panic(err)
-		}
-	}
-	sepRune = ([]rune(sepRunes))[0]
-
-	return sepRune
+func hash(s string) uint32 {
+	h := fnv.New32a()
+	h.Write([]byte(s))
+	return h.Sum32()
 }
