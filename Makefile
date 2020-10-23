@@ -9,3 +9,6 @@ dbv7-build:
 
 dbv5-build:
 	go build -o dbv5 ./cmd/dbv5
+
+mergev5v7-build:
+	go build -o mergev5v7 ./cmd/mergev5v7
