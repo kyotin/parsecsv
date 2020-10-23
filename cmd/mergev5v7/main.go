@@ -15,7 +15,7 @@ var (
 	inJsonV5  = flag.String("inJsonV5", "/Users/tinnguyen/Downloads/dbv5_1000.json", "path to json v5 file")
 	inJsonV7  = flag.String("inJsonV7", "/Users/tinnguyen/Downloads/dbv7_1000.json", "Path to json v7 file")
 	out       = flag.String("out", "./out.json", "path to out file")
-	workers   = flag.Int("workers", 1, "max number of workers")
+	workers   = flag.Int("workers", 10, "max number of workers")
 	buffLines = flag.Int("buffLines", 1000, "buffer lines when reading")
 )
 
@@ -81,18 +81,20 @@ func main() {
 	concurrentWriter.Write()
 
 	var wg sync.WaitGroup
+	var l sync.Mutex
 	for i := 0; i < *workers; i++ {
 		wg.Add(1)
 		go func(workerId int, lines <-chan string, goodLines chan<- string, wg *sync.WaitGroup, emailPhoneMap map[string]string) {
 			fmt.Printf("V7Worker %d Start \n", workerId)
 			numOfLines := 0
 			for line := range lines {
-
+				numOfLines += 1
 				record := &Record{}
 				if err := json.Unmarshal([]byte(line), record); err == nil {
 					// DO business here
-					numOfLines += 1
+					l.Lock()
 					emailPhoneMap[record.Source.PersonEmail] = record.Source.PersonPhone
+					l.Unlock()
 					goodLines <- line
 				} else {
 					fmt.Println("can't unmarshal", err)
