@@ -93,7 +93,7 @@ func main() {
 				if err := json.Unmarshal([]byte(line), record); err == nil {
 					// DO business here
 					l.Lock()
-					emailPhoneMap[record.Source.PersonEmail] = record.Source.PersonPhone
+					emailPhoneMap[record.Source.PersonPhone] = record.Source.PersonEmail
 					l.Unlock()
 					goodLines <- line
 				} else {
@@ -127,7 +127,7 @@ func main() {
 				record := &Record{}
 				if err := json.Unmarshal([]byte(line), record); err == nil {
 					// DO business here
-					if _, ok := emailPhoneMap[record.Source.PersonEmail]; !ok {
+					if _, ok := emailPhoneMap[record.Source.PersonPhone]; !ok {
 						goodLines <- line
 					}
 				} else {
