@@ -12,3 +12,6 @@ dbv5-build:
 
 mergev5v7-build:
 	go build -o mergev5v7 ./cmd/mergev5v7
+
+countdistinctbyfield-build:
+	go build -o countdistinctbyfield ./cmd/countdistinctbyfield
