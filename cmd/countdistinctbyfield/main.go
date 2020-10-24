@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 )
 
 var (
@@ -48,31 +47,41 @@ func main() {
 
 	buffLines, _ := strconv.Atoi(*buffLines)
 	lines := make(chan string, buffLines)
-	var readWaitGroup sync.WaitGroup
-	concurrentReader := reader.NewConcurrentReader(in, lines, 15, &readWaitGroup)
+	var readWG sync.WaitGroup
+	concurrentReader := reader.NewConcurrentReader(in, lines, 15, &readWG)
 	concurrentReader.Read()
 
 	maxWorker, _ := strconv.Atoi(*workers)
 
 	goodLines := make(chan string, maxWorker)
 	done := make(chan bool)
-	go func(goodLines <-chan string, done <-chan bool) {
+	var writeWG sync.WaitGroup
+	writeWG.Add(1)
+	go func(goodLines <-chan string, done <-chan bool, writeWG *sync.WaitGroup) {
 		m := make(map[string]int64, 1000)
+		isDone := false
 		for {
 			select {
 			case line := <-goodLines:
 				str := strings.Split(line, ",")
-				incr, _ := strconv.Atoi(str[1])
-				m[str[0]] = m[str[0]] + int64(incr)
+				if len(str) == 2 {
+					incr, _ := strconv.Atoi(str[1])
+					m[str[0]] = m[str[0]] + int64(incr)
+				}
 			case <-done:
 				for k, v := range m {
 					row := fmt.Sprintf("%s, %d \n", k, v)
 					_, _ = out.WriteString(row)
 				}
+				isDone = true
+			}
+
+			if isDone {
 				break
 			}
 		}
-	}(goodLines, done)
+		writeWG.Done()
+	}(goodLines, done, &writeWG)
 
 	var wg sync.WaitGroup
 	for i := 0; i < maxWorker; i++ {
@@ -109,11 +118,10 @@ func main() {
 		}(i, lines, goodLines, &wg)
 	}
 
-	readWaitGroup.Wait()
+	readWG.Wait()
 	close(lines)
 	wg.Wait()
+	close(goodLines)
 	done <- true
-
-	// wait for writing to file
-	<-time.After(5 * time.Second)
+	writeWG.Wait()
 }
