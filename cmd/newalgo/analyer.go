@@ -36,7 +36,7 @@ func (out *Analyzer) AnalysePattern() {
 		buildingPattern = "Last"
 	} else if out.lastname == "" && out.firstname == buildingPattern {
 		buildingPattern = "First"
-	} else {
+	} else if out.lastname != "" && out.firstname != "" {
 		firstNameIdx := strings.Index(buildingPattern, out.firstname)
 		lastNameIdx := strings.Index(buildingPattern, out.lastname)
 
@@ -177,6 +177,9 @@ func (out *Analyzer) AnalysePattern() {
 				}
 			}
 		}
+	} else {
+		out.Err = errors.New(fmt.Sprintf("Can't aware pattern from %s, %s, %s", out.email, out.firstname, out.lastname))
+		return
 	}
 
 	out.Pattern = buildingPattern
