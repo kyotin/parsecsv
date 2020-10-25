@@ -23,6 +23,11 @@ func (out *Analyzer) AnalysePattern() {
 		return
 	}
 
+	out.firstname = strings.ReplaceAll(out.firstname, "'", "")
+	out.firstname = strings.ReplaceAll(out.firstname, "`", "")
+	out.lastname = strings.ReplaceAll(out.lastname, "'", "")
+	out.lastname = strings.ReplaceAll(out.lastname, "`", "")
+
 	parts := strings.Split(out.email, "@")
 	if len(parts) != 2 {
 		out.Err = errors.New(fmt.Sprintf("look like the email is wrong %s", out.email))

@@ -35,6 +35,8 @@ func TestAnalyzer_AnalysePattern(t *testing.T) {
 		{"tin", "nguyen", "tnguyen@gmail.com", "FLast"},
 		{"tin", "nguyen", "t-nguyen@gmail.com", "F-Last"},
 		{"tin", "nguyen", "tinguyen@gmail.com", "TwofirstletteroffirstLast"},
+		{"neil", "o'dwyer", "neil.odwyer@citigroup.com", "First.Last"},
+		{"catherine", "o`reilly", "catherine.oreilly@kaseya.com", "First.Last"},
 	}
 
 	for _, row := range testCases {
