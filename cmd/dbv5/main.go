@@ -76,8 +76,8 @@ func main() {
 
 	// work with json file
 	lines := make(chan string, *buffLines)
-	var readWaitGroup sync.WaitGroup
-	concurrentReader := reader.NewConcurrentReader(jsonFile, lines, 10, &readWaitGroup)
+	var readWG sync.WaitGroup
+	concurrentReader := reader.NewConcurrentReader(jsonFile, lines, 10, &readWG)
 	concurrentReader.Read()
 
 	var jsonBuildMapWG sync.WaitGroup
@@ -94,7 +94,7 @@ func main() {
 		wg.Done()
 	}(lines, phoneEmailMap, &jsonBuildMapWG)
 
-	readWaitGroup.Wait()
+	readWG.Wait()
 	close(lines)
 
 	jsonBuildMapWG.Wait()
@@ -107,8 +107,8 @@ func main() {
 	csvConcurrentReader.Read()
 
 	goodLines := make(chan string, *workers*1000)
-	var writeWaitGroup sync.WaitGroup
-	concurrentWriter := writer.NewWriteConcurrent(outFile, goodLines, 10, &writeWaitGroup)
+	var writeWG sync.WaitGroup
+	concurrentWriter := writer.NewWriteConcurrent(outFile, goodLines, 10, &writeWG)
 	concurrentWriter.Write()
 
 	var wg sync.WaitGroup
@@ -169,7 +169,7 @@ func main() {
 	wg.Wait()
 	close(goodLines)
 
-	writeWaitGroup.Wait()
+	writeWG.Wait()
 
 	_ = csvFile.Close()
 	_ = jsonFile.Close()

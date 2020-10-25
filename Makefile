@@ -15,3 +15,6 @@ mergev5v7-build:
 
 countdistinctbyfield-build:
 	go build -o countdistinctbyfield ./cmd/countdistinctbyfield
+
+newalgo-build:
+	go build -o newalgo ./cmd/newalgo
