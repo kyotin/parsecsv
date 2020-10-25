@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"parsecsv/internal/model/jsonstruct"
 	"parsecsv/internal/reader"
 	"parsecsv/internal/utils"
 	"sync"
@@ -18,25 +19,6 @@ var (
 	buffLines      = flag.Int("buffLines", 2000, "buffer lines when reading")
 	processWorkers = flag.Int("workers", 1, "max number of workers")
 )
-
-type _Source struct {
-	PersonName                   string `json:"person_name"`
-	PersonFirstNameUnanalyzed    string `json:"person_first_name_unanalyzed"`
-	PersonLastNameUnanalyzed     string `json:"person_last_name_unanalyzed"`
-	PersonNameUnanalyzedDowncase string `json:"person_name_unanalyzed_downcase"`
-	PersonEmailStatusCd          string `json:"person_email_status_cd"`
-	PersonExtrapolatedEmail      string `json:"person_extrapolated_email"`
-	PersonEmail                  string `json:"person_email"`
-	PersonLinkedinUrl            string `json:"person_linkedin_url"`
-	SantizedOrganizationName     string `json:"sanitized_organization_name_unanalyzed"`
-	OrganizationName             string `json:"organization_name"`
-}
-
-type Record struct {
-	Index  string  `json:"_index"`
-	Type   string  `json:"_type"`
-	Source _Source `json:"_source"`
-}
 
 func main() {
 	flag.Parse()
@@ -81,7 +63,7 @@ func main() {
 			numOfLines := 0
 			for line := range lines {
 				numOfLines += 1
-				record := &Record{}
+				record := &jsonstruct.Record{}
 				if err := json.Unmarshal([]byte(line), record); err == nil {
 					// DO business here
 					if b, err := json.Marshal(record.Source); err == nil {

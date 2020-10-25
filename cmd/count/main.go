@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"parsecsv/internal/model/csvstruct"
 	"strconv"
 	"strings"
 )
@@ -15,12 +16,6 @@ var (
 	in  = flag.String("in", "/Users/tinnguyen/Downloads/test.csv", "Path to input file")
 	out = flag.String("out", "./out.csv", "Path to output file")
 )
-
-type Record struct {
-	Name  string
-	Email string
-	Phone string
-}
 
 type Report struct {
 	NumberOfEmails   map[string]struct{}
@@ -59,7 +54,7 @@ func main() {
 			panic(err)
 		}
 
-		record := Record{
+		record := csvstruct.Record{
 			Name:  fields[0],
 			Email: fields[1],
 			Phone: fields[2],
