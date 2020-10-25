@@ -8,8 +8,8 @@ import (
 
 var patterns = []string{
 	"Initial",
-	"First", "FirstL", "Frist.L", "First_L", "First-L", "FirstTwofirstletteroflast", "LFirst", "L-First", "L.First", "L_First", "TwofirstletteroflastFirst",
-	"Last", "LastF", "Last.F", "Last_F", "Last-F", "TwofirstletteroffirstLast", "FLast", "F-Last", "F.Last", "F_Last", "LastTwofirstletteroffrist",
+	"First", "FirstL", "First.L", "First_L", "First-L", "FirstTwofirstletteroflast", "LFirst", "L-First", "L.First", "L_First", "TwofirstletteroflastFirst",
+	"Last", "LastF", "Last.F", "Last_F", "Last-F", "TwofirstletteroffirstLast", "FLast", "F-Last", "F.Last", "F_Last", "LastTwofirstletteroffirst",
 	"LastFirst", "Last.First", "FirstLast", "First.Last", "First_Last", "First-Last", "Last_First"}
 
 type PatternScore map[string]float64
@@ -92,10 +92,10 @@ func (c *Collector) WriteOut(f *os.File, done chan bool) {
 		first := true
 		for _, p := range patterns {
 			if first {
-				_, _ = fmt.Fprintf(f, "%f,%s", info.PatternScore[p], p)
+				_, _ = fmt.Fprintf(f, "%.2f,%s", info.PatternScore[p], p)
 				first = false
 			} else {
-				_, _ = fmt.Fprintf(f, ",%f,%s", info.PatternScore[p], p)
+				_, _ = fmt.Fprintf(f, ",%.2f,%s", info.PatternScore[p], p)
 			}
 		}
 		_, _ = fmt.Fprintf(f, ",%s,%d\n", domain, info.Entries)
