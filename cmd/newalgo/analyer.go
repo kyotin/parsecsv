@@ -50,7 +50,7 @@ func (out *Analyzer) AnalysePattern() {
 				return
 			}
 		} else if firstNameIdx != -1 && lastNameIdx != -1 {
-			if lastNameIdx < len(out.firstname) && len(out.firstname)-lastNameIdx+1 == 2 && buildingPattern[0] == out.firstname[0] && buildingPattern[1] == out.firstname[1] {
+			if lastNameIdx < len(out.firstname) && len(out.firstname)-lastNameIdx+1 == 2 && len(out.firstname) >= 2 && len(buildingPattern) >= 2 && buildingPattern[0] == out.firstname[0] && buildingPattern[1] == out.firstname[1] {
 				buildingPattern = "TwofirstletteroffirstLast"
 			} else {
 				buildingPattern = strings.ReplaceAll(buildingPattern, out.firstname, "First")
