@@ -9,6 +9,8 @@ func TestAnalyzer_AnalysePattern(t *testing.T) {
 	testCases := [][]string{
 		{"tin", "nguyen", "tn@gmail.com", "Initial"},
 		{"tin", "nguyen", "tin@gmail.com", "First"},
+		{"tin", "", "tin@gmail.com", "First"},
+		{"", "nguyen", "nguyen@gmail.com", "Last"},
 		{"tin", "nguyen", "tinnguyen@gmail.com", "FirstLast"},
 		{"tin", "nguyen", "tin-nguyen@gmail.com", "First-Last"},
 		{"tin", "nguyen", "tin.nguyen@gmail.com", "First.Last"},
