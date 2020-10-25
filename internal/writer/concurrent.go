@@ -1,6 +1,7 @@
 package writer
 
 import (
+	"fmt"
 	"os"
 	"parsecsv/internal/utils"
 	"sync"
@@ -35,6 +36,8 @@ func (wc *WriteConcurrent) Write() {
 				if _, ok := hmap[hashValue]; !ok {
 					hmap[hashValue] = struct{}{}
 					_, _ = out.WriteString(line + "\n")
+				} else {
+					fmt.Printf("Duplicated: %s \n", line)
 				}
 				lock.Unlock()
 			}

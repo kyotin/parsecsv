@@ -35,10 +35,10 @@ type CsvRecord struct {
 }
 
 func (s CsvRecord) IsNotValid() bool {
-	return (s.Phone == "" && s.Email == "") ||
-		(s.Email == "" && s.PersonLinkedinUrl == "") ||
-		(s.Phone == "" && s.PersonLinkedinUrl == "") ||
-		(s.Email == "" && s.SanitizedOrganizationName == "")
+	return (s.Phone == "null" && s.Email == "null") ||
+		(s.Email == "null" && s.PersonLinkedinUrl == "null") ||
+		(s.Phone == "null" && s.PersonLinkedinUrl == "null") ||
+		(s.Email == "null" && s.SanitizedOrganizationName == "null")
 }
 
 //json
