@@ -16,6 +16,7 @@ var (
 	out       = flag.String("out", "./out.csv", "path to out file")
 	workers   = flag.Int("workers", 10, "max number of workers")
 	buffLines = flag.Int("buffLines", 1000, "buffer lines when reading")
+	format    = flag.String("format", "json", "json or csv")
 )
 
 func main() {
@@ -42,7 +43,7 @@ func main() {
 	concurrentReader := reader.NewConcurrentReader(jsonFile, lines, 10, &readWG)
 	concurrentReader.Read()
 
-	collector := NewCollector()
+	collector := NewCollector(*format)
 
 	var wg sync.WaitGroup
 	for i := 0; i < *workers; i++ {
@@ -80,5 +81,5 @@ func main() {
 
 	done := make(chan bool)
 	collector.WriteOut(outFile, done)
-	<- done
+	<-done
 }

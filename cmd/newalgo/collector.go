@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"sync"
@@ -55,12 +56,14 @@ func NewDomainAggregateInfo() *DomainAggregateInfo {
 }
 
 type Collector struct {
-	DomainInfo map[Domain]*DomainAggregateInfo
-	l          sync.Mutex
+	WriteOutFormat string
+	DomainInfo     map[Domain]*DomainAggregateInfo
+	l              sync.Mutex
 }
 
-func NewCollector() *Collector {
+func NewCollector(WriteOutFormat string) *Collector {
 	return &Collector{
+		WriteOutFormat: WriteOutFormat,
 		DomainInfo: make(map[Domain]*DomainAggregateInfo),
 	}
 }
@@ -88,17 +91,39 @@ func (c *Collector) Collect(analyzer Analyzer) {
 }
 
 func (c *Collector) WriteOut(f *os.File, done chan bool) {
-	for domain, info := range c.DomainInfo {
-		first := true
-		for _, p := range patterns {
-			if first {
-				_, _ = fmt.Fprintf(f, "%.2f,%s", info.PatternScore[p], p)
-				first = false
-			} else {
-				_, _ = fmt.Fprintf(f, ",%.2f,%s", info.PatternScore[p], p)
+	if c.WriteOutFormat == "json" {
+		type JsonOutStruct struct {
+			Domain Domain
+			PatternScore PatternScore
+			Entries int64
+		}
+
+		for domain, info := range c.DomainInfo {
+			jsonOutStruct := JsonOutStruct{
+				Domain:       domain,
+				PatternScore: info.PatternScore,
+				Entries:      info.Entries,
+			}
+
+			if b, err := json.Marshal(jsonOutStruct); err == nil {
+				_, _ = fmt.Fprintln(f, string(b))
 			}
 		}
-		_, _ = fmt.Fprintf(f, ",%s,%d\n", domain, info.Entries)
+	}
+
+	if c.WriteOutFormat == "csv" {
+		for domain, info := range c.DomainInfo {
+			first := true
+			for _, p := range patterns {
+				if first {
+					_, _ = fmt.Fprintf(f, "%.2f,%s", info.PatternScore[p], p)
+					first = false
+				} else {
+					_, _ = fmt.Fprintf(f, ",%.2f,%s", info.PatternScore[p], p)
+				}
+			}
+			_, _ = fmt.Fprintf(f, ",%s,%d\n", domain, info.Entries)
+		}
 	}
 	close(done)
 }
