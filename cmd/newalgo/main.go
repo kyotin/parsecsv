@@ -16,7 +16,7 @@ var (
 	out       = flag.String("out", "./out.csv", "path to out file")
 	workers   = flag.Int("workers", 10, "max number of workers")
 	buffLines = flag.Int("buffLines", 1000, "buffer lines when reading")
-	format    = flag.String("format", "json", "json or csv")
+	format    = flag.String("format", "csv", "json or csv")
 )
 
 func main() {
@@ -54,7 +54,7 @@ func main() {
 			for line := range lines {
 				numOfLines += 1
 				record := &jsonstruct.Record{}
-				if err := json.Unmarshal([]byte(line), record); err == nil {
+				if err := json.Unmarshal([]byte(line), record); err == nil && record.Source.PersonEmailStatusCd == "Verified" {
 					analyzer := Analyzer{
 						email:     record.Source.PersonEmail,
 						firstname: record.Source.PersonFirstNameUnanalyzed,
