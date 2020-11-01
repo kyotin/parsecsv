@@ -18,3 +18,6 @@ countdistinctbyfield-build:
 
 newalgo-build:
 	go build -o newalgo ./cmd/newalgo
+
+insertdb-build:
+	go build -o insertdb ./cmd/insertdb
