@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	inCsv        = flag.String("inJson", "/Users/tinnguyen/go/src/parsecsv/config/newalgo_verified_email.csv", "path to csv file")
+	inCsv        = flag.String("inCsv", "/Users/tinnguyen/go/src/parsecsv/config/newalgo_verified_email.csv", "path to csv file")
 	workers      = flag.Int("workers", 1, "max number of workers")
 	buffLines    = flag.Int("buffLines", 1000, "buffer lines when reading")
 	configFolder = flag.String("configFolder", "/Users/tinnguyen/go/src/parsecsv/config/", "Path to config file")
