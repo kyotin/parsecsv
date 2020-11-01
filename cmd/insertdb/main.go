@@ -66,7 +66,7 @@ func main() {
 
 	dataService := db2.NewDataService(ctx, db)
 
-	var lock *sync.Mutex
+	var lock sync.Mutex
 	processedDomain := make(map[string]struct{})
 
 	var wg sync.WaitGroup
