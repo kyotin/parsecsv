@@ -108,7 +108,11 @@ func main() {
 
 				if updateRows, err := dataService.UpdateDomainToOld(dbEmailPattern.DomainName); err == nil {
 					if insertRows, err := dataService.InsertNewEmailPattern(dbEmailPattern); err == nil {
-						fmt.Printf("update %d and insert %d for domain %s \n", updateRows, insertRows, dbEmailPattern.DomainName)
+						fmt.Printf("update %d and insert %d for domain %s, below is rollback cmd \n", updateRows, insertRows, dbEmailPattern.DomainName)
+						fmt.Printf("DELETE FROM email_pattern WHERE domain_name=\"%s\";", dbEmailPattern.DomainName)
+						if updateRows > 0 {
+							fmt.Printf("UPDATE email_pattern SET domain_name=\"%s\" WHERE domain_name=\"%s\";\n", dbEmailPattern.DomainName, "old_" + dbEmailPattern.DomainName)
+						}
 					} else {
 						fmt.Printf("can't insert new email pattern %s \n", err)
 					}
