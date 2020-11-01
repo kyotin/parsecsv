@@ -66,6 +66,7 @@ func main() {
 
 	dataService := db2.NewDataService(ctx, db)
 
+	var lock *sync.Mutex
 	processedDomain := make(map[string]struct{})
 
 	var wg sync.WaitGroup
@@ -84,10 +85,13 @@ func main() {
 					continue
 				}
 
+				lock.Lock()
 				if _, ok := processedDomain[csvEmailPattern.Domain]; ok {
+					lock.Unlock()
 					continue
 				} else {
 					processedDomain[csvEmailPattern.Domain] = struct{}{}
+					lock.Unlock()
 				}
 
 				scores, patterns := csvEmailPattern.First3HighestScorePatterns()
