@@ -2,19 +2,42 @@ package db
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"parsecsv/internal/model/emailpattern"
 	"testing"
 )
 
+func MakeConnect(connectService ConnectService) (*sql.DB, error){
+	viper.SetConfigName("production")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("/Users/tinnguyen/go/src/parsecsv/config/")
+
+	err := viper.ReadInConfig() // Find and read the config file
+	if err != nil {             // Handle errors reading the config file
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
+
+	dbConfig := &DatabaseConfig{}
+	err = viper.UnmarshalKey("database", dbConfig)
+	if err != nil {
+		panic(err)
+	}
+
+	return connectService.Connect(
+		dbConfig.Username,
+		dbConfig.Password,
+		dbConfig.Uri,
+		dbConfig.Database)
+
+}
+
 func TestDataManipulator_FindEmailPatternByDomain(t *testing.T) {
 	ctx := context.Background()
 	connectService := NewMysqlConnector(ctx, 5, 2)
-	db, err := connectService.Connect(
-		"xxxxx",
-		"xxxxxxxx",
-		"xxxx:3306",
-		"xxx")
+	db, err := MakeConnect(connectService)
 	defer connectService.Disconnect()
 
 	assert.Nil(t, err)
@@ -33,11 +56,7 @@ func TestDataManipulator_FindEmailPatternByDomain(t *testing.T) {
 func TestDataManipulator_UpdateDomainToOld(t *testing.T) {
 	ctx := context.Background()
 	connectService := NewMysqlConnector(ctx, 5, 2)
-	db, err := connectService.Connect(
-		"xxxxx",
-		"xxxxxxxx",
-		"xxxx:3306",
-		"xxx")
+	db, err := MakeConnect(connectService)
 	defer connectService.Disconnect()
 
 	assert.Nil(t, err)
@@ -55,11 +74,7 @@ func TestDataManipulator_UpdateDomainToOld(t *testing.T) {
 func TestDataManipulator_InsertDeleteEmailPattern(t *testing.T) {
 	ctx := context.Background()
 	connectService := NewMysqlConnector(ctx, 5, 2)
-	db, err := connectService.Connect(
-		"xxxxx",
-		"xxxxxxxx",
-		"xxxx:3306",
-		"xxx")
+	db, err := MakeConnect(connectService)
 	defer connectService.Disconnect()
 
 	assert.Nil(t, err)
@@ -96,4 +111,36 @@ func TestDataManipulator_InsertDeleteEmailPattern(t *testing.T) {
 	deletedRows, err := dataService.DeleteDomain("oto4u.vn")
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), deletedRows)
+}
+
+func TestDataManipulator_GetMaxID(t *testing.T) {
+	ctx := context.Background()
+	connectService := NewMysqlConnector(ctx, 5, 2)
+	db, err := MakeConnect(connectService)
+	defer connectService.Disconnect()
+
+	assert.Nil(t, err)
+	assert.NotNil(t, db)
+
+	dataService := NewDataService(ctx, db)
+	maxID, err := dataService.GetMaxID()
+	assert.Nil(t, err)
+	fmt.Printf("%d", maxID)
+}
+
+func TestDataManipulator_FindEmailPatternByIDRange(t *testing.T) {
+	ctx := context.Background()
+	connectService := NewMysqlConnector(ctx, 5, 2)
+	db, err := MakeConnect(connectService)
+	defer connectService.Disconnect()
+
+	assert.Nil(t, err)
+	assert.NotNil(t, db)
+
+	dataService := NewDataService(ctx, db)
+	emails, err := dataService.FindEmailPatternByIDRange(0, 20)
+	assert.Nil(t, err)
+	for _, email := range emails {
+		fmt.Println(email)
+	}
 }

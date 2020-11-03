@@ -21,3 +21,6 @@ newalgo-build:
 
 insertdb-build:
 	go build -o insertdb ./cmd/insertdb
+
+newdomain-build:
+	go build -o newdomain ./cmd/newdomain

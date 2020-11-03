@@ -21,13 +21,6 @@ var (
 	configFolder = flag.String("configFolder", "/Users/tinnguyen/go/src/parsecsv/config/", "Path to config file")
 )
 
-type DatabaseConfig struct {
-	Username string `mapstructure:"username"`
-	Password string `mapstructure:"password"`
-	Uri      string `mapstructure:"uri"`
-	Database string `mapstructure:"database_name"`
-}
-
 func main() {
 	flag.Parse()
 
@@ -40,7 +33,7 @@ func main() {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
 
-	dbConfig := &DatabaseConfig{}
+	dbConfig := &db2.DatabaseConfig{}
 	err = viper.UnmarshalKey("database", dbConfig)
 	if err != nil {
 		panic(err)

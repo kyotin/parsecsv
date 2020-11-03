@@ -16,6 +16,8 @@ type DataService interface {
 	UpdateDomainToOld(domain string) (int64, error)
 	InsertNewEmailPattern(emailPattern emailpattern.EmailPattern) (int64, error)
 	DeleteDomain(domain string) (int64, error)
+	GetMaxID() (int64, error)
+	FindEmailPatternByIDRange(start int64, end int64) ([]*emailpattern.EmailPattern, error)
 }
 
 type dataManipulator struct {
@@ -27,6 +29,66 @@ func NewDataService(ctx context.Context, db *sql.DB) DataService {
 	return &dataManipulator{
 		ctx: ctx,
 		db:  db,
+	}
+}
+
+func (manipulator *dataManipulator) FindEmailPatternByIDRange(start int64, end int64) ([]*emailpattern.EmailPattern, error) {
+	var emails []*emailpattern.EmailPattern
+	// Execute the query
+	rows, err := manipulator.
+		db.
+		Query(""+
+			"SELECT id, score1, pattern1, score2, pattern2, score3, pattern3, domain_name, entry "+
+			"FROM email_pattern "+
+			"WHERE id >= ? AND id <= ?",
+			start,
+			end,
+		)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		emailPattern := &emailpattern.EmailPattern{}
+		err := rows.Scan(&emailPattern.ID,
+			&emailPattern.Score1,
+			&emailPattern.Pattern1,
+			&emailPattern.Score2,
+			&emailPattern.Pattern2,
+			&emailPattern.Score3,
+			&emailPattern.Pattern3,
+			&emailPattern.DomainName,
+			&emailPattern.Entry)
+
+		if err == nil {
+			emails = append(emails, emailPattern)
+		}
+	}
+
+	if len(emails) == 0 {
+		return nil, NOTFOUNDERR
+	}
+
+	return emails, nil
+}
+
+func (manipulator *dataManipulator) GetMaxID() (int64, error) {
+	result, err := manipulator.db.QueryContext(manipulator.ctx, "SELECT max(id) FROM email_pattern")
+	if err != nil {
+		return 0, err
+	}
+
+	var maxID int64
+
+	if !result.Next() {
+		return 0, err
+	}
+
+	if err = result.Scan(&maxID); err == nil {
+		return maxID, nil
+	} else {
+		return 0, err
 	}
 }
 
