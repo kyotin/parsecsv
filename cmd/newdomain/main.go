@@ -66,7 +66,7 @@ func main() {
 			endRange := startRange + idRange
 			emails, err := dataService.FindEmailPatternByIDRange(startRange, endRange)
 			if err != nil {
-				fmt.Printf("Can't get emails id from range [%d, %d]", startRange, endRange)
+				fmt.Printf("Can't get emails id from range [%d, %d], err: %s \n", startRange, endRange, err)
 				return
 			}
 
