@@ -11,6 +11,7 @@ import (
 	db2 "parsecsv/internal/db"
 	"parsecsv/internal/model/jsonstruct"
 	"parsecsv/internal/reader"
+	"runtime"
 	"strings"
 	"sync"
 )
@@ -18,7 +19,6 @@ import (
 var (
 	inJson       = flag.String("inJson", "/Users/tinnguyen/Downloads/test.json", "path to json file")
 	out          = flag.String("out", "./out.csv", "path to out file")
-	workers      = flag.Int("workers", 2, "max number of workers")
 	buffLines    = flag.Int("buffLines", 1000, "buffer lines when reading")
 	configFolder = flag.String("configFolder", "/Users/tinnguyen/go/src/parsecsv/config/", "Path to config file")
 )
@@ -42,42 +42,12 @@ func main() {
 	}
 
 	ctx := context.Background()
-	connectService := db2.NewMysqlConnector(ctx, *workers, *workers/2)
+	workers := runtime.NumCPU()
+	connectService := db2.NewMysqlConnector(ctx, workers, workers/2)
 	db, err := connectService.Connect(dbConfig.Username, dbConfig.Password, dbConfig.Uri, dbConfig.Database)
 	defer connectService.Disconnect()
 
 	dataService := db2.NewDataService(ctx, db)
-
-	// get max number of id
-	maxID, err := dataService.GetMaxID()
-	if err != nil {
-		panic(err)
-	}
-
-	var dbDomain sync.Map
-
-	idRange := maxID / int64(*workers)
-	fmt.Printf("idRange is %d \n", idRange)
-	var queryWG sync.WaitGroup
-	for i := 0; i < *workers; i++ {
-		queryWG.Add(1)
-		go func(workerId int, wg *sync.WaitGroup) {
-			startRange := idRange * int64(workerId)
-			endRange := startRange + idRange
-			emails, err := dataService.FindEmailPatternByIDRange(startRange, endRange)
-			if err != nil {
-				fmt.Printf("Can't get emails id from range [%d, %d], err: %s \n", startRange, endRange, err)
-				return
-			}
-
-			for _, email := range emails {
-				dbDomain.Store(email.DomainName, nil)
-			}
-
-			defer wg.Done()
-		}(i, &queryWG)
-	}
-	queryWG.Wait()
 
 	// read json file
 	jsonFile, err := os.Open(*inJson)
@@ -99,8 +69,8 @@ func main() {
 	concurrentReader.Read()
 
 	var wg sync.WaitGroup
-	var newDomain sync.Map
-	for i := 0; i < *workers; i++ {
+	var apolloDomain sync.Map
+	for i := 0; i < workers; i++ {
 		wg.Add(1)
 		go func(workerId int, lines <-chan string, wg *sync.WaitGroup) {
 			fmt.Printf("Worker %d Start \n", workerId)
@@ -116,15 +86,17 @@ func main() {
 					}
 
 					domain := parts[1]
-					_, ok := dbDomain.Load(domain)
-					if ok {
+
+					_, err = dataService.FindEmailPatternByDomain(domain)
+					if err == nil || err != db2.NOTFOUNDERR {
+						fmt.Printf("domain %s already in db\n", domain)
 						continue
 					}
 
-					if entries, ok := newDomain.Load(domain); ok {
-						newDomain.Store(domain, entries.(int64)+1)
+					if entries, ok := apolloDomain.Load(domain); ok {
+						apolloDomain.Store(domain, entries.(int64)+1)
 					} else {
-						newDomain.Store(domain, int64(1))
+						apolloDomain.Store(domain, int64(1))
 					}
 
 				} else {
@@ -142,7 +114,7 @@ func main() {
 
 	wg.Wait()
 
-	newDomain.Range(func(k, v interface{}) bool {
+	apolloDomain.Range(func(k, v interface{}) bool {
 		fmt.Fprintf(outFile, "%s, %d\n", k, v.(int64))
 		return true
 	})
