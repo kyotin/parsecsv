@@ -56,7 +56,7 @@ func main() {
 
 	var dbDomain sync.Map
 
-	idRange := int64(*workers) / maxID
+	idRange := maxID / int64(*workers)
 	fmt.Printf("idRange is %d \n", idRange)
 	var queryWG sync.WaitGroup
 	for i := 0; i < *workers; i++ {
@@ -93,7 +93,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-
 	lines := make(chan string, *buffLines)
 	var readWG sync.WaitGroup
 	concurrentReader := reader.NewConcurrentReader(jsonFile, lines, 10, &readWG)
@@ -123,7 +122,7 @@ func main() {
 					}
 
 					if entries, ok := newDomain.Load(domain); ok {
-						newDomain.Store(domain, entries.(int64) + 1)
+						newDomain.Store(domain, entries.(int64)+1)
 					} else {
 						newDomain.Store(domain, int64(1))
 					}
