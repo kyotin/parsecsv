@@ -69,6 +69,7 @@ func main() {
 	concurrentReader.Read()
 
 	var wg sync.WaitGroup
+	var existedDomain sync.Map
 	var apolloDomain sync.Map
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
@@ -86,10 +87,14 @@ func main() {
 					}
 
 					domain := parts[1]
+					if _, ok := existedDomain.Load(domain); ok {
+						continue
+					}
 
 					_, err = dataService.FindEmailPatternByDomain(domain)
 					if err == nil || err != db2.NOTFOUNDERR {
 						fmt.Printf("domain %s already in db\n", domain)
+						existedDomain.Store(domain, nil)
 						continue
 					}
 
