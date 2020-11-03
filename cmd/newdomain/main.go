@@ -57,8 +57,6 @@ func main() {
 	var dbDomain sync.Map
 
 	idRange := int64(*workers) / maxID
-	idRange = 200
-
 	fmt.Printf("idRange is %d \n", idRange)
 	var queryWG sync.WaitGroup
 	for i := 0; i < *workers; i++ {
