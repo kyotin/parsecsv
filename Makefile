@@ -27,3 +27,6 @@ newdomain-build:
 
 linkedinvsverifiedemail-build:
 	go build -o linkedinvsverifiedemail ./cmd/linkedinvsverifiedemail
+
+emailvsphoneorlinkedinvsphone-build:
+	go build -o emailvsphoneorlinkedinvsphone ./cmd/emailvsphoneorlinkedinvsphone
