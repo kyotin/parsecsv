@@ -24,3 +24,6 @@ insertdb-build:
 
 newdomain-build:
 	go build -o newdomain ./cmd/newdomain
+
+linkedinvsverifiedemail-build:
+	go build -o linkedinvsverifiedemail ./cmd/linkedinvsverifiedemail
