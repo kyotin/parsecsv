@@ -30,3 +30,6 @@ linkedinvsverifiedemail-build:
 
 emailvsphoneorlinkedinvsphone-build:
 	go build -o emailvsphoneorlinkedinvsphone ./cmd/emailvsphoneorlinkedinvsphone
+
+companydb-build:
+	go build -o companydb ./cmd/companydb
