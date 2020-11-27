@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"parsecsv/internal/model/emailpattern"
+	"parsecsv/internal/model/jsonstruct"
 	"testing"
 )
 
@@ -94,7 +95,6 @@ func TestDataManipulator_InsertDeleteEmailPattern(t *testing.T) {
 	insertedRows, err := dataService.InsertNewEmailPattern(emailPattern)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), insertedRows)
-
 	emails, err := dataService.FindEmailPatternByDomain("oto4u.vn")
 	assert.Nil(t, err)
 	assert.Equal(t, "oto4u.vn", emails[0].DomainName)
@@ -143,4 +143,38 @@ func TestDataManipulator_FindEmailPatternByIDRange(t *testing.T) {
 	for _, email := range emails {
 		fmt.Println(email)
 	}
+}
+
+func TestDataManipulator_InsertNewCompany(t *testing.T) {
+	ctx := context.Background()
+	connectService := NewMysqlConnector(ctx, 5, 2)
+	db, err := MakeConnect(connectService)
+	defer connectService.Disconnect()
+
+	assert.Nil(t, err)
+	assert.NotNil(t, db)
+
+	dataService := NewDataService(ctx, db)
+	company := jsonstruct.CompanyDB{
+		OrganizationName:                             "xxx",
+		SanitizedOrganizationNameUnanalyzed:          "xxx",
+		OrganizationFoundedYear:                      0,
+		OrganizationNumCurrentEmployees:              0,
+		OrganizationAlexaRanking:                     0,
+		OrganizationRelevantKeywords:                 []string{"a", "b", "c"},
+		OrganizationIndustries:                       []string{"a", "b", "c"},
+		OrganizationLinkedinSpecialties:              "",
+		OrganizationWebsiteUrl:                       "",
+		OrganizationTwitterUrl:                       "",
+		OrganizationLinkedNumericalUrls:              []string{"a", "b", "c"},
+		OrganizationPhone:                            "",
+		OrganizationAllPossibleDomains:               []string{"a", "b", "c"},
+		OrganizationCurrentTechinologies:             []string{"a", "b", "c"},
+		OrganizationHqLocationCity:                   "",
+		OrganizationHqLocationCityWithStateOrCountry: "",
+		OrganizationHqLocationState:                  "",
+		OrganizationHqLocationCountry:                "",
+	}
+	_, err = dataService.InsertNewCompany(&company)
+	assert.Nil(t, err)
 }

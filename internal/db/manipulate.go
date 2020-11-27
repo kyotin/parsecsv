@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"parsecsv/internal/model/emailpattern"
+	"parsecsv/internal/model/jsonstruct"
+	"strings"
 )
 
 var NOTFOUNDERR = errors.New("not found")
@@ -18,6 +20,7 @@ type DataService interface {
 	DeleteDomain(domain string) (int64, error)
 	GetMaxID() (int64, error)
 	FindEmailPatternByIDRange(start int64, end int64) ([]*emailpattern.EmailPattern, error)
+	InsertNewCompany(company *jsonstruct.CompanyDB) (int64, error)
 }
 
 type dataManipulator struct {
@@ -188,6 +191,67 @@ func (manipulator *dataManipulator) InsertNewEmailPattern(emailPattern emailpatt
 		emailPattern.Pattern3,
 		emailPattern.DomainName,
 		emailPattern.Entry)
+
+	if err != nil {
+		return 0, err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return 0, COMMITEDERR
+	}
+
+	return result.RowsAffected()
+}
+
+func (manipulator *dataManipulator) InsertNewCompany(company *jsonstruct.CompanyDB) (int64, error) {
+	txOption := &sql.TxOptions{
+		Isolation: sql.LevelSerializable,
+		ReadOnly:  false,
+	}
+	tx, err := manipulator.db.BeginTx(manipulator.ctx, txOption)
+	if err != nil {
+		return 0, err
+	}
+
+	result, err := tx.ExecContext(manipulator.ctx,
+		"INSERT INTO company_apollo(" +
+		"organization_name," +
+		"sanitized_organization_name_unanalyzed," +
+		"organization_founded_year," +
+		"organization_num_current_employees," +
+		"organization_alexa_ranking," +
+		"organization_relevant_keywords," +
+		"organization_industries," +
+		"organization_linkedin_specialties," +
+		"organization_website_url," +
+		"organization_twitter_url," +
+		"organization_linkedin_numerical_urls," +
+		"organization_phone," +
+		"organization_all_possible_domains," +
+		"organization_current_technologies," +
+		"organization_hq_location_city," +
+		"organization_hq_location_city_with_state_or_country," +
+		"organization_hq_location_state," +
+		"organization_hq_location_country" +
+		") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+		company.OrganizationName,
+		company.SanitizedOrganizationNameUnanalyzed,
+		company.OrganizationFoundedYear,
+		company.OrganizationNumCurrentEmployees,
+		company.OrganizationAlexaRanking,
+		strings.Join(company.OrganizationRelevantKeywords,"|"),
+		strings.Join(company.OrganizationIndustries,"|"),
+		company.OrganizationLinkedinSpecialties,
+		company.OrganizationWebsiteUrl,
+		company.OrganizationTwitterUrl,
+		strings.Join(company.OrganizationLinkedNumericalUrls, "|"),
+		company.OrganizationPhone,
+		strings.Join(company.OrganizationAllPossibleDomains, "|"),
+		strings.Join(company.OrganizationCurrentTechinologies, "|"),
+		company.OrganizationHqLocationCity,
+		company.OrganizationHqLocationCityWithStateOrCountry,
+		company.OrganizationHqLocationState,
+		company.OrganizationHqLocationCountry)
 
 	if err != nil {
 		return 0, err

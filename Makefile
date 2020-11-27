@@ -33,3 +33,6 @@ emailvsphoneorlinkedinvsphone-build:
 
 companydb-build:
 	go build -o companydb ./cmd/companydb
+
+insertcompanydb-build:
+	go build -o insertcompanydb ./cmd/insertcompanydb
