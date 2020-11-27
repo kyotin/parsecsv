@@ -17,7 +17,6 @@ import (
 
 var (
 	companyDB  = flag.String("companyDB", "./companydb.json", "path to companydb json")
-	out       = flag.String("out", "./out.json", "path to out file")
 	buffLines = flag.Int("buffLines", 1000, "buffer lines when reading")
 	configFolder = flag.String("configFolder", "./config/", "Path to config file")
 )
@@ -40,13 +39,6 @@ func main() {
 		log.Fatal(err)
 	}
 	defer originJson.Close()
-
-
-	outFile, err := os.Create(*out)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer outFile.Close()
 
 	dbConfig := &db2.DatabaseConfig{}
 	err = viper.UnmarshalKey("database", dbConfig)
